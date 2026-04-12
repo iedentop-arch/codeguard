@@ -92,6 +92,10 @@ class VendorMember(Base, TimestampMixin):
     exam_attempts: Mapped[int] = mapped_column(Integer, default=0, comment="考试尝试次数")
     certification_id: Mapped[Optional[str]] = mapped_column(String(32), comment="认证编号")
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Phase 3: GitHub权限字段
+    github_permission_status: Mapped[str] = mapped_column(String(20), default="none", comment="GitHub权限状态")
+    github_permission_level: Mapped[Optional[str]] = mapped_column(String(10), comment="GitHub权限级别")
+    github_permission_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="权限同步时间")
 
     # 关联
     vendor: Mapped["Vendor"] = relationship(back_populates="members")
@@ -255,3 +259,186 @@ class User(Base, TimestampMixin):
     role: Mapped[str] = mapped_column(String(20), nullable=False, comment="角色")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+
+# === Phase 2 & Phase 3 新增模型 ===
+
+class TaskLog(Base):
+    """任务执行日志表"""
+    __tablename__ = "task_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    task_name: Mapped[str] = mapped_column(String(100), nullable=False, comment="任务名称")
+    status: Mapped[str] = mapped_column(String(20), nullable=False, comment="状态")
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="开始时间")
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="完成时间")
+    error_message: Mapped[Optional[str]] = mapped_column(Text, comment="错误信息")
+    metadata: Mapped[Optional[str]] = mapped_column(Text, comment="元数据(JSON)")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class Alert(Base):
+    """告警记录表"""
+    __tablename__ = "alerts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    vendor_id: Mapped[int] = mapped_column(Integer, ForeignKey("vendors.id"), nullable=False)
+    rule_id: Mapped[str] = mapped_column(String(50), nullable=False, comment="规则ID")
+    severity: Mapped[str] = mapped_column(String(20), nullable=False, comment="严重程度")
+    status: Mapped[str] = mapped_column(String(20), default="active", comment="状态")
+    message: Mapped[str] = mapped_column(Text, nullable=False, comment="告警消息")
+    triggered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, comment="触发时间")
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="解决时间")
+    metadata: Mapped[Optional[str]] = mapped_column(Text, comment="元数据(JSON)")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_alerts_vendor", "vendor_id"),
+        Index("idx_alerts_status", "status"),
+    )
+
+
+class SpecVersion(Base):
+    """规范版本历史表"""
+    __tablename__ = "spec_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    spec_id: Mapped[int] = mapped_column(Integer, ForeignKey("spec_documents.id"), nullable=False)
+    version: Mapped[str] = mapped_column(String(20), nullable=False, comment="版本号")
+    content_snapshot: Mapped[Optional[str]] = mapped_column(Text, comment="内容快照")
+    change_summary: Mapped[Optional[str]] = mapped_column(Text, comment="变更摘要")
+    changed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, comment="变更时间")
+    changed_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"), comment="变更人")
+
+
+class SpecChangeNotification(Base):
+    """规范变更通知表"""
+    __tablename__ = "spec_change_notifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    spec_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("spec_documents.id"))
+    old_version: Mapped[Optional[str]] = mapped_column(String(20), comment="旧版本")
+    new_version: Mapped[Optional[str]] = mapped_column(String(20), comment="新版本")
+    change_type: Mapped[Optional[str]] = mapped_column(String(20), comment="变更类型")
+    change_summary: Mapped[Optional[str]] = mapped_column(Text, comment="变更摘要")
+    notify_status: Mapped[str] = mapped_column(String(20), default="pending", comment="通知状态")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class NotificationRecord(Base):
+    """通知发送记录表"""
+    __tablename__ = "notification_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    notification_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("spec_change_notifications.id"))
+    vendor_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("vendors.id"))
+    member_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("vendor_members.id"))
+    channel: Mapped[Optional[str]] = mapped_column(String(20), comment="通知渠道")
+    status: Mapped[Optional[str]] = mapped_column(String(20), comment="发送状态")
+    sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="发送时间")
+    error_message: Mapped[Optional[str]] = mapped_column(Text, comment="错误信息")
+
+
+class QuarterlyTraining(Base, TimestampMixin):
+    """季度培训计划表"""
+    __tablename__ = "quarterly_trainings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False, comment="年份")
+    quarter: Mapped[int] = mapped_column(Integer, nullable=False, comment="季度(1-4)")
+    title: Mapped[Optional[str]] = mapped_column(String(200), comment="培训标题")
+    description: Mapped[Optional[str]] = mapped_column(Text, comment="培训描述")
+    spec_ids: Mapped[Optional[str]] = mapped_column(Text, comment="关联规范ID(JSON)")
+    start_date: Mapped[Optional[datetime]] = mapped_column(Date, comment="开始日期")
+    end_date: Mapped[Optional[datetime]] = mapped_column(Date, comment="结束日期")
+    status: Mapped[str] = mapped_column(String(20), default="draft", comment="状态")
+    created_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"))
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        Index("idx_quarterly_trainings_year_quarter", "year", "quarter"),
+    )
+
+
+class TrainingRecord(Base, TimestampMixin):
+    """培训记录表"""
+    __tablename__ = "training_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    quarterly_training_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("quarterly_trainings.id"))
+    vendor_member_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("vendor_members.id"))
+    vendor_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("vendors.id"))
+    status: Mapped[str] = mapped_column(String(20), default="enrolled", comment="状态")
+    exam_score: Mapped[Optional[int]] = mapped_column(Integer, comment="考试分数")
+    exam_passed: Mapped[Optional[bool]] = mapped_column(Boolean, comment="是否通过")
+    certification_id: Mapped[Optional[str]] = mapped_column(String(32), comment="认证编号")
+    enrolled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="报名时间")
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="完成时间")
+    notes: Mapped[Optional[str]] = mapped_column(Text, comment="备注")
+
+    __table_args__ = (
+        Index("idx_training_records_training_member", "quarterly_training_id", "vendor_member_id"),
+    )
+
+
+class AuditLog(Base):
+    """审计日志表"""
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"))
+    user_name: Mapped[Optional[str]] = mapped_column(String(50), comment="用户名")
+    user_role: Mapped[Optional[str]] = mapped_column(String(20), comment="用户角色")
+    action_type: Mapped[str] = mapped_column(String(50), nullable=False, comment="操作类型")
+    resource_type: Mapped[Optional[str]] = mapped_column(String(50), comment="资源类型")
+    resource_id: Mapped[Optional[int]] = mapped_column(Integer, comment="资源ID")
+    vendor_id: Mapped[Optional[int]] = mapped_column(Integer, comment="涉及供应商")
+    old_value: Mapped[Optional[str]] = mapped_column(Text, comment="旧值(JSON)")
+    new_value: Mapped[Optional[str]] = mapped_column(Text, comment="新值(JSON)")
+    description: Mapped[Optional[str]] = mapped_column(Text, comment="操作描述")
+    ip_address: Mapped[Optional[str]] = mapped_column(String(45), comment="IP地址")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_audit_logs_user", "user_id", "created_at"),
+        Index("idx_audit_logs_resource", "resource_type", "resource_id"),
+        Index("idx_audit_logs_vendor", "vendor_id", "created_at"),
+    )
+
+
+class SLAAppeal(Base, TimestampMixin):
+    """SLA申诉表"""
+    __tablename__ = "sla_appeals"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    vendor_id: Mapped[int] = mapped_column(Integer, ForeignKey("vendors.id"), nullable=False)
+    submitter_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("vendor_members.id"))
+    monthly_score_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("monthly_scores.id"))
+    appeal_type: Mapped[Optional[str]] = mapped_column(String(20), comment="申诉类型")
+    reason: Mapped[Optional[str]] = mapped_column(Text, comment="申诉理由")
+    evidence_urls: Mapped[Optional[str]] = mapped_column(Text, comment="证据链接(JSON)")
+    status: Mapped[str] = mapped_column(String(20), default="pending", comment="状态")
+    reviewed_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"))
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, comment="审核时间")
+    review_notes: Mapped[Optional[str]] = mapped_column(Text, comment="审核备注")
+    resolution: Mapped[Optional[str]] = mapped_column(Text, comment="处理结果")
+    submitted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index("idx_appeals_vendor", "vendor_id", "status"),
+        Index("idx_appeals_status", "status", "submitted_at"),
+    )
+
+
+class SystemConfig(Base, TimestampMixin):
+    """系统配置表"""
+    __tablename__ = "system_configs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    config_key: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, comment="配置键")
+    config_value: Mapped[Optional[str]] = mapped_column(Text, comment="配置值")
+    config_type: Mapped[Optional[str]] = mapped_column(String(20), comment="配置类型")
+    description: Mapped[Optional[str]] = mapped_column(Text, comment="配置描述")
+    category: Mapped[Optional[str]] = mapped_column(String(50), comment="配置分类")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    updated_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id"))
