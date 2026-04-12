@@ -5,11 +5,11 @@
 - 企业微信Webhook
 - 邮件SMTP
 """
-from datetime import datetime
-from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
-import json
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
 import httpx
 
 from app.core.config import settings
@@ -25,14 +25,14 @@ class NotificationResult:
     success: bool
     message: str
     sent_at: datetime
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class NotificationService:
     """通知服务"""
 
     @classmethod
-    async def send_wechat_alert(cls, alert: AlertInstance, webhook_url: Optional[str] = None) -> NotificationResult:
+    async def send_wechat_alert(cls, alert: AlertInstance, webhook_url: str | None = None) -> NotificationResult:
         """
         发送企业微信告警
 
@@ -119,8 +119,8 @@ class NotificationService:
     async def send_email_alert(
         cls,
         alert: AlertInstance,
-        recipients: Optional[List[str]] = None,
-        subject: Optional[str] = None
+        recipients: list[str] | None = None,
+        subject: str | None = None
     ) -> NotificationResult:
         """
         发送邮件告警
@@ -176,7 +176,7 @@ class NotificationService:
         )
 
     @classmethod
-    async def dispatch_alert(cls, alert: AlertInstance) -> List[NotificationResult]:
+    async def dispatch_alert(cls, alert: AlertInstance) -> list[NotificationResult]:
         """
         根据告警严重程度分派到不同通知渠道
 
@@ -204,7 +204,7 @@ class NotificationService:
         return results
 
     @classmethod
-    async def send_batch_alerts(cls, alerts: List[AlertInstance]) -> Dict[str, Any]:
+    async def send_batch_alerts(cls, alerts: list[AlertInstance]) -> dict[str, Any]:
         """
         批量发送告警通知
 
@@ -248,7 +248,7 @@ class WeeklyReportService:
     """周度简报服务"""
 
     @classmethod
-    def generate_weekly_summary(cls, data: Dict[str, Any]) -> str:
+    def generate_weekly_summary(cls, data: dict[str, Any]) -> str:
         """
         生成周度简报内容
 

@@ -1,19 +1,20 @@
 """Initial migration
 
 Revision ID: 001
-Revises: 
+Revises:
 Create Date: 2026-04-10
 
 """
-from typing import Sequence, Union
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
 
+from alembic import op
 
 revision: str = '001'
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -37,7 +38,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('name'),
     )
-    
+
     # 创建乙方成员表
     op.create_table(
         'vendor_members',
@@ -59,7 +60,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
         sa.UniqueConstraint('email'),
     )
-    
+
     # 创建规范文档表
     op.create_table(
         'spec_documents',
@@ -76,7 +77,7 @@ def upgrade() -> None:
         sa.Column('is_deleted', sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint('id'),
     )
-    
+
     # 创建考试题目表
     op.create_table(
         'exam_questions',
@@ -96,7 +97,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(), nullable=False),
         sa.PrimaryKeyConstraint('id'),
     )
-    
+
     # 创建PR表
     op.create_table(
         'pull_requests',
@@ -120,7 +121,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
     )
-    
+
     # 创建质量门禁表
     op.create_table(
         'quality_gates',
@@ -137,7 +138,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['pr_id'], ['pull_requests.id']),
     )
-    
+
     # 创建月度评分表
     op.create_table(
         'monthly_scores',
@@ -159,7 +160,7 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
     )
     op.create_index('idx_vendor_period', 'monthly_scores', ['vendor_id', 'score_period'], unique=True)
-    
+
     # 创建交付表
     op.create_table(
         'deliveries',
@@ -179,7 +180,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['vendor_id'], ['vendors.id']),
     )
-    
+
     # 创建验收清单表
     op.create_table(
         'delivery_checklists',
@@ -198,7 +199,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
         sa.ForeignKeyConstraint(['delivery_id'], ['deliveries.id']),
     )
-    
+
     # 创建用户表
     op.create_table(
         'users',

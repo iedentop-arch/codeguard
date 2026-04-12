@@ -3,8 +3,6 @@
 用于本地开发测试，无需配置真实的 GitHub App
 """
 import asyncio
-import json
-from datetime import datetime
 
 from app.core.database import async_session_maker
 from app.models.models import PullRequest, QualityGate, Vendor

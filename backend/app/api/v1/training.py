@@ -2,15 +2,15 @@
 入驻培训 API
 """
 import random
-from typing import Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.v1.auth import get_current_user
-from app.models.models import ExamQuestion, VendorMember
+from app.core.database import get_db
+from app.models.models import ExamQuestion
 from app.schemas.response import ApiResponse
 
 router = APIRouter()
@@ -59,13 +59,13 @@ async def get_exam_questions(
         )
     )
     all_questions = result.scalars().all()
-    
+
     # 随机抽取指定数量
     if len(all_questions) < count:
         selected = all_questions
     else:
         selected = random.sample(list(all_questions), count)
-    
+
     return ApiResponse(data=[
         {
             "id": q.id,
@@ -94,7 +94,7 @@ async def submit_exam(
         select(ExamQuestion).where(ExamQuestion.id.in_(question_ids))
     )
     questions = result.scalars().all()
-    
+
     # 计算分数
     correct_count = 0
     results = []
@@ -110,11 +110,11 @@ async def submit_exam(
             "is_correct": is_correct,
             "explanation": q.explanation,
         })
-    
+
     total = len(questions)
     score = int(correct_count / total * 100) if total > 0 else 0
     passed = score >= 80
-    
+
     return ApiResponse(data={
         "score": score,
         "passed": passed,

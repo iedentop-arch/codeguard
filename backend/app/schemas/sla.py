@@ -1,11 +1,9 @@
 """
 SLA相关Schema定义
 """
-from datetime import date
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Any
 
-from app.models.models import SLAGrade
+from pydantic import BaseModel, Field
 
 
 class DimensionScoreResponse(BaseModel):
@@ -23,7 +21,7 @@ class SLABreakdownResponse(BaseModel):
     vendor_id: int
     vendor_name: str
     period: str
-    dimensions: List[DimensionScoreResponse]
+    dimensions: list[DimensionScoreResponse]
     total_score: float
     grade: str
 
@@ -31,7 +29,7 @@ class SLABreakdownResponse(BaseModel):
 class SLACalculateRequest(BaseModel):
     """SLA计算请求"""
     vendor_id: int
-    period: Optional[str] = None  # YYYY-MM格式，默认上月
+    period: str | None = None  # YYYY-MM格式，默认上月
 
 
 class SLACalculateResponse(BaseModel):
@@ -41,7 +39,7 @@ class SLACalculateResponse(BaseModel):
     period: str
     total_score: float
     grade: str
-    dimensions: List[DimensionScoreResponse]
+    dimensions: list[DimensionScoreResponse]
     message: str = "评分计算完成"
 
 
@@ -52,13 +50,13 @@ class VendorComparisonResponse(BaseModel):
     vendor_type: str
     current_grade: str
     current_score: float
-    dimension_scores: Dict[str, float]
+    dimension_scores: dict[str, float]
 
 
 class SLATrendResponse(BaseModel):
     """SLA趋势响应"""
     vendor_id: int
     vendor_name: str
-    periods: List[str]
-    scores: List[float]
-    grades: List[str]
+    periods: list[str]
+    scores: list[float]
+    grades: list[str]

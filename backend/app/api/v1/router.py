@@ -3,11 +3,23 @@ API v1 路由聚合
 """
 from fastapi import APIRouter
 
-from app.api.v1 import auth, vendors, specs, training, reviews, metrics, deliverables, webhooks, health
 # Phase 2 新增路由
-from app.api.v1 import sla, alerts
 # Phase 3 新增路由
-from app.api.v1 import appeals, config
+from app.api.v1 import (
+    alerts,
+    appeals,
+    auth,
+    config,
+    deliverables,
+    health,
+    metrics,
+    reviews,
+    sla,
+    specs,
+    training,
+    vendors,
+    webhooks,
+)
 
 api_router = APIRouter()
 

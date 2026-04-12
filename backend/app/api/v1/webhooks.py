@@ -6,16 +6,17 @@ GitHub Webhook 接收端点
 - check_run 事件 (CI 完成)
 - workflow_run 事件 (GitHub Actions 完成)
 """
-import json
-import hmac
 import hashlib
+import hmac
+import json
 import logging
-from fastapi import APIRouter, Request, Depends, HTTPException, Header
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.services.pr_processor import handle_pull_request_event, handle_check_run_event, handle_workflow_run_event
+from app.services.pr_processor import handle_check_run_event, handle_pull_request_event, handle_workflow_run_event
 
 logger = logging.getLogger(__name__)
 

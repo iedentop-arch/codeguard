@@ -5,13 +5,14 @@ CodeGuard Backend Application
 Author: AI-Assisted: 80% (初始结构由 AI 生成)
 """
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 
-from app.core.config import settings, get_private_key
-from app.core.database import init_db
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.v1.router import api_router
+from app.core.config import get_private_key, settings
+from app.core.database import init_db
 
 
 @asynccontextmanager
@@ -54,14 +55,14 @@ async def health_check():
     包含 GitHub App 配置状态摘要
     """
     private_key = get_private_key()
-    
+
     github_ready = all([
         settings.GITHUB_APP_ID and not settings.GITHUB_APP_ID.startswith("placeholder"),
         private_key,
         settings.GITHUB_WEBHOOK_SECRET,
         settings.GITHUB_APP_INSTALLATION_ID > 0,
     ])
-    
+
     return {
         "status": "healthy",
         "version": settings.APP_VERSION,
@@ -84,7 +85,7 @@ async def github_config_status():
     返回配置检查清单和下一步操作指引
     """
     private_key = get_private_key()
-    
+
     checks = [
         {
             "item": "GITHUB_APP_ID",
@@ -107,9 +108,9 @@ async def github_config_status():
             "value": settings.GITHUB_APP_INSTALLATION_ID,
         },
     ]
-    
+
     passed = sum(1 for c in checks if c["status"] == "pass")
-    
+
     return {
         "summary": {
             "passed": passed,

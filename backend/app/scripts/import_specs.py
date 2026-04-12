@@ -3,15 +3,13 @@
 从参考项目 20260408220853 导入所有规范文档到数据库
 """
 import asyncio
-import os
 import re
 from pathlib import Path
-from datetime import datetime
 
 from sqlalchemy import select
+
 from app.core.database import async_session_maker
 from app.models.models import SpecDocument
-
 
 # 规范文档目录
 SPEC_BASE_DIR = "/Users/eden-f/code-work/Qoder-w/20260408220853/dairy-coding-standards"

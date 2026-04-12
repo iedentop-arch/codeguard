@@ -1,15 +1,13 @@
 """
 交付管理 API
 """
-from typing import Optional, List
-from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from app.core.database import get_db
 from app.api.v1.auth import get_current_user
-from app.models.models import Delivery, DeliveryChecklist, Vendor, PullRequest
+from app.core.database import get_db
+from app.models.models import Delivery, DeliveryChecklist, Vendor
 from app.schemas.response import ApiResponse
 
 router = APIRouter()
@@ -52,7 +50,7 @@ async def submit_delivery(
     version = data.get("version", "v1.0.0")
     description = data.get("description", "")
     vendor_id = data.get("vendor_id", 1)
-    
+
     delivery = Delivery(
         project_id=project_id,
         vendor_id=vendor_id,
@@ -62,7 +60,7 @@ async def submit_delivery(
     )
     db.add(delivery)
     await db.flush()
-    
+
     # 创建验收清单项
     checklist_dimensions = [
         ("项目初始化", ["1.1", "1.2", "1.3"]),
@@ -74,7 +72,7 @@ async def submit_delivery(
         ("文档", ["9.1", "9.2"]),
         ("交付清单", ["10.1", "10.2"]),
     ]
-    
+
     for dimension, items in checklist_dimensions:
         for item_num in items:
             checklist = DeliveryChecklist(
@@ -86,10 +84,10 @@ async def submit_delivery(
                 status="pending",
             )
             db.add(checklist)
-    
+
     await db.flush()
     await db.refresh(delivery)
-    
+
     return ApiResponse(data={"delivery_id": delivery.id, "message": "交付物已提交"})
 
 
@@ -104,14 +102,14 @@ async def get_delivery(
         select(Delivery).where(Delivery.id == delivery_id, Delivery.is_deleted == False)
     )
     delivery = result.scalar_one_or_none()
-    
+
     if not delivery:
         raise HTTPException(status_code=404, detail="交付物不存在")
-    
+
     # 获取供应商名称
     vendor_result = await db.execute(select(Vendor.name).where(Vendor.id == delivery.vendor_id))
     vendor_name = vendor_result.scalar_one_or_none()
-    
+
     return ApiResponse(data={
         "id": delivery.id,
         "project_id": delivery.project_id,
@@ -135,7 +133,7 @@ async def get_checklist(
         select(DeliveryChecklist).where(DeliveryChecklist.delivery_id == delivery_id)
     )
     items = result.scalars().all()
-    
+
     # 按维度分组
     dimensions = {}
     for item in items:
@@ -150,13 +148,13 @@ async def get_checklist(
             "auto_filled": item.auto_filled,
             "reviewer_notes": item.reviewer_notes,
         })
-    
+
     # 统计
     total = len(items)
     accepted = sum(1 for i in items if i.status == "accepted")
     rejected = sum(1 for i in items if i.status == "rejected")
     pending = total - accepted - rejected
-    
+
     return ApiResponse(data={
         "dimensions": dimensions,
         "summary": {
@@ -181,31 +179,31 @@ async def update_checklist(
             select(DeliveryChecklist).where(DeliveryChecklist.id == int(item_id))
         )
         item = result.scalar_one_or_none()
-        
+
         if item:
             item.status = updates.get("status", item.status)
             item.reviewer_notes = updates.get("reviewer_notes", item.reviewer_notes)
-    
+
     await db.flush()
-    
+
     return ApiResponse(message="验收清单已更新")
 
 
 @router.get("/history")
 async def get_delivery_history(
-    vendor_id: Optional[int] = Query(None),
+    vendor_id: int | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
     """获取交付历史"""
     query = select(Delivery).where(Delivery.is_deleted == False)
-    
+
     if vendor_id:
         query = query.where(Delivery.vendor_id == vendor_id)
-    
+
     result = await db.execute(query.order_by(Delivery.created_at.desc()))
     deliveries = result.scalars().all()
-    
+
     return ApiResponse(data=[
         {
             "id": d.id,

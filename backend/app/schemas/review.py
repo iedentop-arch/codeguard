@@ -2,9 +2,9 @@
 代码审查相关 Schema
 """
 from datetime import datetime
-from typing import Optional, List, Dict
-from pydantic import BaseModel
 from enum import Enum
+
+from pydantic import BaseModel
 
 
 class PRStatus(str, Enum):
@@ -34,7 +34,7 @@ class QualityGateBase(BaseModel):
     layer: int
     layer_name: str
     status: GateStatus
-    details: Optional[Dict[str, GateStatus]] = None
+    details: dict[str, GateStatus] | None = None
     violations_count: int = 0
     warnings_count: int = 0
 
@@ -55,36 +55,36 @@ class PRBase(BaseModel):
     """PR基础信息"""
     github_pr_number: int
     title: str
-    branch: Optional[str] = None
+    branch: str | None = None
 
 
 class PRCreate(PRBase):
     """创建PR"""
     vendor_id: int
-    author_id: Optional[int] = None
-    github_pr_url: Optional[str] = None
+    author_id: int | None = None
+    github_pr_url: str | None = None
 
 
 class PRUpdate(BaseModel):
     """更新PR"""
-    status: Optional[PRStatus] = None
-    lines_added: Optional[int] = None
-    lines_removed: Optional[int] = None
-    files_changed: Optional[int] = None
-    has_ai_code: Optional[bool] = None
-    ai_code_marked: Optional[bool] = None
+    status: PRStatus | None = None
+    lines_added: int | None = None
+    lines_removed: int | None = None
+    files_changed: int | None = None
+    has_ai_code: bool | None = None
+    ai_code_marked: bool | None = None
 
 
 class PRResponse(BaseModel):
     """PR响应"""
     id: int
     vendor_id: int
-    vendor_name: Optional[str] = None
-    author_name: Optional[str] = None
+    vendor_name: str | None = None
+    author_name: str | None = None
     github_pr_number: int
-    github_pr_url: Optional[str] = None
+    github_pr_url: str | None = None
     title: str
-    branch: Optional[str] = None
+    branch: str | None = None
     status: PRStatus
     lines_added: int
     lines_removed: int
@@ -92,8 +92,8 @@ class PRResponse(BaseModel):
     has_ai_code: bool
     ai_code_marked: bool
     created_at: datetime
-    merged_at: Optional[datetime] = None
-    gates: List[QualityGateResponse] = []
+    merged_at: datetime | None = None
+    gates: list[QualityGateResponse] = []
 
     class Config:
         from_attributes = True
@@ -101,7 +101,7 @@ class PRResponse(BaseModel):
 
 class PRListResponse(BaseModel):
     """PR列表响应"""
-    items: List[PRResponse]
+    items: list[PRResponse]
     total: int
 
 
@@ -114,7 +114,7 @@ class ReviewComment(BaseModel):
 
 class ReviewApprove(BaseModel):
     """批准合并"""
-    comment: Optional[str] = None
+    comment: str | None = None
 
 
 class ReviewReject(BaseModel):

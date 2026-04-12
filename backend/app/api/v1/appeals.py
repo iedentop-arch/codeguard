@@ -2,14 +2,14 @@
 SLA申诉API
 """
 from datetime import datetime
-from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.v1.auth import get_current_user
-from app.models.models import Vendor, VendorMember, MonthlyScore, SLAAppeal, User, SLAGrade
+from app.core.database import get_db
+from app.models.models import SLAAppeal, User, Vendor
 from app.schemas.response import ApiResponse
 
 router = APIRouter()
@@ -17,8 +17,8 @@ router = APIRouter()
 
 @router.get("")
 async def list_appeals(
-    vendor_id: Optional[int] = Query(None),
-    status: Optional[str] = Query(None),
+    vendor_id: int | None = Query(None),
+    status: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

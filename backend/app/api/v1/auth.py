@@ -2,17 +2,18 @@
 认证 API
 """
 from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
 from app.core.config import settings
-from app.core.security import verify_password, create_access_token, decode_token
-from app.schemas.auth import Token, LoginRequest, UserResponse
-from app.schemas.response import ApiResponse
+from app.core.database import get_db
+from app.core.security import create_access_token, decode_token, verify_password
 from app.models.models import User
+from app.schemas.auth import Token, UserResponse
+from app.schemas.response import ApiResponse
 
 router = APIRouter()
 

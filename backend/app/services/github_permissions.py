@@ -5,17 +5,18 @@ GitHub权限联动服务
 - 培训认证通过后授予写权限
 - 培训未通过或暂停后撤销权限
 """
-from datetime import datetime
-from dataclasses import dataclass
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
-from app.models.models import VendorMember, Vendor
-from app.core.github_client import github_client
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
-from app.services.audit_logger import AuditLogger, AuditLogEntry
+from app.core.github_client import github_client
+from app.models.models import Vendor, VendorMember
+from app.services.audit_logger import AuditLogger
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class PermissionSyncResult:
     """权限同步结果"""
     member_id: int
     member_name: str
-    github_username: Optional[str]
+    github_username: str | None
     action: str  # grant, revoke, none
     success: bool
     message: str
@@ -47,7 +48,7 @@ class GitHubPermissionService:
     PERMISSION_STATUS_REVOKED = "revoked"
 
     @classmethod
-    async def get_repo_info(cls, vendor_id: int, db: AsyncSession) -> Dict[str, str]:
+    async def get_repo_info(cls, vendor_id: int, db: AsyncSession) -> dict[str, str]:
         """
         获取供应商关联的仓库信息
 
@@ -80,9 +81,9 @@ class GitHubPermissionService:
         cls,
         member_id: int,
         db: AsyncSession,
-        user_id: Optional[int] = None,
-        user_name: Optional[str] = None,
-        user_role: Optional[str] = None
+        user_id: int | None = None,
+        user_name: str | None = None,
+        user_role: str | None = None
     ) -> PermissionSyncResult:
         """
         授予成员GitHub仓库写权限
@@ -194,9 +195,9 @@ class GitHubPermissionService:
         cls,
         member_id: int,
         db: AsyncSession,
-        user_id: Optional[int] = None,
-        user_name: Optional[str] = None,
-        user_role: Optional[str] = None
+        user_id: int | None = None,
+        user_name: str | None = None,
+        user_role: str | None = None
     ) -> PermissionSyncResult:
         """
         撤销成员GitHub仓库权限
@@ -305,7 +306,7 @@ class GitHubPermissionService:
         cls,
         vendor_id: int,
         db: AsyncSession
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         同步供应商所有成员的权限
 

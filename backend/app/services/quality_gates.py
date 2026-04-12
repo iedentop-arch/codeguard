@@ -9,16 +9,14 @@
 - L5_DOCUMENTATION: 文档检查 (README/CHANGELOG)
 - L6_COMPLIANCE: 合规检查 (广告法、内容合规)
 """
-import re
 import logging
-from datetime import datetime
+import re
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.models.models import QualityGate, PullRequest
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.github_client import github_client
+from app.models.models import PullRequest, QualityGate
 
 logger = logging.getLogger(__name__)
 
@@ -62,15 +60,15 @@ async def run_quality_gates(
         (5, "L5_DOCUMENTATION", "文档检查", run_l5_documentation),
         (6, "L6_COMPLIANCE", "合规检查", run_l6_compliance),
     ]
-    
+
     results = []
     all_passed = True
-    
+
     for layer, gate_id, name, check_fn in gates:
         try:
             result = await check_fn(pr, pr_diff, db)
             results.append(result)
-            
+
             # 存储到数据库
             gate_record = QualityGate(
                 pr_id=pr.id,
@@ -82,7 +80,7 @@ async def run_quality_gates(
                 warnings_count=result.warnings_count,
             )
             db.add(gate_record)
-            
+
             # 更新 GitHub commit status
             if github_client.is_configured():
                 status_state = "success" if result.status == "passed" else (
@@ -96,10 +94,10 @@ async def run_quality_gates(
                     context=f"CodeGuard/{gate_id}",
                     description=result.details[:140] if result.details else f"{name}: {result.status}",
                 )
-            
+
             if result.status == "failed":
                 all_passed = False
-                
+
         except Exception as e:
             logger.error(f"Error running gate {gate_id}: {e}")
             # 标记为 error
@@ -111,9 +109,9 @@ async def run_quality_gates(
                 details=f"检查执行出错: {str(e)}",
             ))
             all_passed = False
-    
+
     await db.commit()
-    
+
     # 发送 PR 评论摘要
     if github_client.is_configured():
         try:
@@ -126,14 +124,14 @@ async def run_quality_gates(
             )
         except Exception as e:
             logger.error(f"Failed to post PR comment: {e}")
-    
+
     # 更新 PR 状态
     if all_passed:
         pr.status = "ci_passed"
     else:
         pr.status = "ci_failed"
     await db.commit()
-    
+
     return results
 
 
@@ -148,7 +146,7 @@ async def run_l1_red_line(pr: PullRequest, diff: str, db: AsyncSession) -> GateR
     - 禁止的模块导入
     """
     violations = []
-    
+
     # 检查硬编码敏感信息
     sensitive_patterns = [
         (r'password\s*=\s*[\'"][^\'\"]+[\'"]', "硬编码密码"),
@@ -158,12 +156,12 @@ async def run_l1_red_line(pr: PullRequest, diff: str, db: AsyncSession) -> GateR
         (r'AWS_ACCESS_KEY', "AWS Access Key"),
         (r'PRIVATE_KEY', "Private Key"),
     ]
-    
+
     for pattern, desc in sensitive_patterns:
         matches = re.findall(pattern, diff, re.IGNORECASE)
         if matches:
             violations.append(desc)
-    
+
     # 检查危险函数调用
     dangerous_patterns = [
         (r'eval\s*\(', "eval() 调用"),
@@ -171,24 +169,24 @@ async def run_l1_red_line(pr: PullRequest, diff: str, db: AsyncSession) -> GateR
         (r'subprocess\.call\s*\([^)]*shell=True', "shell=True 的 subprocess 调用"),
         (r'os\.system\s*\(', "os.system() 谅用"),
     ]
-    
+
     for pattern, desc in dangerous_patterns:
         matches = re.findall(pattern, diff)
         if matches:
             violations.append(desc)
-    
+
     # 检查 SQL 注入风险
     sql_injection_patterns = [
         (r'execute\s*\([^)]*\+', "潜在 SQL 注入 (字符串拼接)"),
         (r'raw\s*\([^)]*\+', "Raw SQL 拼接"),
         (r'f\".*SELECT.*\{', "f-string SQL 查询"),
     ]
-    
+
     for pattern, desc in sql_injection_patterns:
         matches = re.findall(pattern, diff, re.IGNORECASE)
         if matches:
             violations.append(desc)
-    
+
     if violations:
         return GateResult(
             layer=1,
@@ -198,7 +196,7 @@ async def run_l1_red_line(pr: PullRequest, diff: str, db: AsyncSession) -> GateR
             details=f"发现 {len(violations)} 个红线违规: " + "; ".join(violations[:5]),
             violations_count=len(violations),
         )
-    
+
     return GateResult(
         layer=1,
         gate_id="L1_RED_LINE",
@@ -217,21 +215,21 @@ async def run_l2_mandatory(pr: PullRequest, diff: str, db: AsyncSession) -> Gate
     - FastAPI 端点文档
     """
     warnings = []
-    
+
     # 检查新增 Python 函数是否有类型注解
     # 匹配新增的函数定义 (diff 中 + 开头的行)
     new_functions = re.findall(r'^\+\s*def\s+(\w+)\s*\([^:]*\):', diff, re.MULTILINE)
-    
+
     # 检查是否有返回类型注解
     functions_with_return_type = re.findall(
         r'^\+\s*def\s+\w+\s*\([^)]*\)\s*->\s*\w+',
         diff, re.MULTILINE
     )
-    
+
     missing_type_annotations = len(new_functions) - len(functions_with_return_type)
     if missing_type_annotations > 0:
         warnings.append(f"{missing_type_annotations} 个函数缺少返回类型注解")
-    
+
     # 检查 FastAPI 端点是否有描述
     # @router.get/post 等装饰器后面应该有 docstring 或 description 参数
     api_routes_without_desc = re.findall(
@@ -242,11 +240,11 @@ async def run_l2_mandatory(pr: PullRequest, diff: str, db: AsyncSession) -> Gate
         r'^\+\s*@router\.(get|post|put|delete|patch)\s*\([^)]*description',
         diff, re.MULTILINE
     )
-    
+
     routes_missing_desc = len(api_routes_without_desc) - len(api_routes_with_desc)
     if routes_missing_desc > 0:
         warnings.append(f"{routes_missing_desc} 个 API 端点缺少 description")
-    
+
     if warnings:
         return GateResult(
             layer=2,
@@ -256,7 +254,7 @@ async def run_l2_mandatory(pr: PullRequest, diff: str, db: AsyncSession) -> Gate
             details="强制检查警告: " + "; ".join(warnings),
             warnings_count=len(warnings),
         )
-    
+
     return GateResult(
         layer=2,
         gate_id="L2_MANDATORY",
@@ -276,12 +274,12 @@ async def run_l3_ai_assisted(pr: PullRequest, diff: str, db: AsyncSession) -> Ga
     - 重复代码检测 (简化版)
     """
     warnings = []
-    
+
     # 检查过长的函数 (>50 行)
     long_functions = []
     function_pattern = r'^\+\s*def\s+\w+\s*\([^)]*\):'
     matches = list(re.finditer(function_pattern, diff, re.MULTILINE))
-    
+
     for i, match in enumerate(matches):
         start_line = diff.count('\n', 0, match.start())
         # 简化：统计到下一个 def 或文件结束
@@ -290,22 +288,22 @@ async def run_l3_ai_assisted(pr: PullRequest, diff: str, db: AsyncSession) -> Ga
         added_lines = function_body.count('\n+') - function_body.count('\n-')
         if added_lines > 50:
             long_functions.append(added_lines)
-    
+
     if long_functions:
         warnings.append(f"{len(long_functions)} 个函数超过 50 行")
-    
+
     # 检查不规范的命名 (单字母变量、中文变量名)
     bad_names = re.findall(r'^\+\s*\w+\s*=\s', diff, re.MULTILINE)
     # 单字母变量 (除了 i, j, k, x, y, z 等循环变量)
     single_letter_vars = re.findall(r'^\+\s*[a-zA-Z]\s*=\s', diff, re.MULTILINE)
     non_standard_vars = [v for v in single_letter_vars if v.strip()[0] not in 'ijkxyz']
-    
+
     if non_standard_vars:
         warnings.append(f"{len(non_standard_vars)} 个不规范变量名")
-    
+
     # 计算质量评分 (简化版)
     score = 100 - len(warnings) * 10
-    
+
     if score < 60:
         return GateResult(
             layer=3,
@@ -324,7 +322,7 @@ async def run_l3_ai_assisted(pr: PullRequest, diff: str, db: AsyncSession) -> Ga
             details=f"代码质量评分: {score}/100",
             warnings_count=len(warnings),
         )
-    
+
     return GateResult(
         layer=3,
         gate_id="L3_AI_ASSISTED",
@@ -358,7 +356,7 @@ async def run_l5_documentation(pr: PullRequest, diff: str, db: AsyncSession) -> 
     - 是否有对应的文档更新
     """
     warnings = []
-    
+
     # 检查是否涉及重要功能变更 (新增 API、数据库变更等)
     important_changes = [
         (r'^\+\s*@router\.', "新增 API 端点"),
@@ -366,19 +364,19 @@ async def run_l5_documentation(pr: PullRequest, diff: str, db: AsyncSession) -> 
         (r'^\+\s*ALTER\s+TABLE', "数据库结构变更"),
         (r'^\+\s*migration', "迁移脚本变更"),
     ]
-    
+
     has_important_change = False
     for pattern, desc in important_changes:
         if re.search(pattern, diff, re.MULTILINE | re.IGNORECASE):
             has_important_change = True
             break
-    
+
     # 检查是否有文档更新
     doc_files = re.findall(r'^diff --git .* (README|CHANGELOG|CHANGELOG\.md|README\.md)', diff, re.MULTILINE)
-    
+
     if has_important_change and not doc_files:
         warnings.append("涉及重要变更但未更新文档")
-    
+
     if warnings:
         return GateResult(
             layer=5,
@@ -388,7 +386,7 @@ async def run_l5_documentation(pr: PullRequest, diff: str, db: AsyncSession) -> 
             details="建议更新 README 或 CHANGELOG",
             warnings_count=len(warnings),
         )
-    
+
     return GateResult(
         layer=5,
         gate_id="L5_DOCUMENTATION",
@@ -407,35 +405,35 @@ async def run_l6_compliance(pr: PullRequest, diff: str, db: AsyncSession) -> Gat
     - 不合规文案
     """
     violations = []
-    
+
     # 广告法敏感词检查
     prohibited_words = [
         "最", "第一", "唯一", "顶级", "极致", "完美",
         "独家", "首选", "绝对", "保证", "百分百",
         "国家级", "世界级", "全网", "全国",
     ]
-    
+
     # 只检查新增内容 (+ 开头的行)
     added_lines = re.findall(r'^\+.*', diff, re.MULTILINE)
     added_content = '\n'.join(added_lines)
-    
+
     for word in prohibited_words:
         if word in added_content:
             # 统计出现次数
             count = added_content.count(word)
             violations.append(f"'{word}' 出现 {count} 次")
-    
+
     # 前端文案相关文件
     frontend_files = ['.vue', '.tsx', '.jsx', '.html']
     is_frontend_change = any(ext in diff for ext in frontend_files)
-    
+
     if is_frontend_change and violations:
         return GateResult(
             layer=6,
             gate_id="L6_COMPLIANCE",
             gate_name="合规检查",
             status="failed",
-            details=f"发现广告法敏感词: " + "; ".join(violations[:5]),
+            details="发现广告法敏感词: " + "; ".join(violations[:5]),
             violations_count=len(violations),
         )
     elif violations:
@@ -444,10 +442,10 @@ async def run_l6_compliance(pr: PullRequest, diff: str, db: AsyncSession) -> Gat
             gate_id="L6_COMPLIANCE",
             gate_name="合规检查",
             status="warning",
-            details=f"建议检查敏感词使用: " + "; ".join(violations[:3]),
+            details="建议检查敏感词使用: " + "; ".join(violations[:3]),
             warnings_count=len(violations),
         )
-    
+
     return GateResult(
         layer=6,
         gate_id="L6_COMPLIANCE",
@@ -462,34 +460,34 @@ def format_gates_summary(results: list[GateResult]) -> str:
     格式化质量门禁摘要为 Markdown 评论
     """
     lines = ["## CodeGuard 质量门禁检查结果\n"]
-    
+
     passed_count = sum(1 for r in results if r.status == "passed")
     failed_count = sum(1 for r in results if r.status == "failed")
     warning_count = sum(1 for r in results if r.status == "warning")
-    
+
     # 总体状态
     if failed_count == 0:
         lines.append(f"### ✅ 总体状态: 通过 ({passed_count}/{len(results)} 门禁通过)\n")
     else:
         lines.append(f"### ❌ 总体状态: 失败 ({failed_count} 个门禁失败)\n")
-    
+
     lines.append("| 层级 | 门禁 | 状态 | 详情 |\n")
     lines.append("|------|------|------|------|\n")
-    
+
     status_icons = {
         "passed": "✅",
         "failed": "❌",
         "warning": "⚠️",
         "running": "🔄",
     }
-    
+
     for r in results:
         icon = status_icons.get(r.status, "❓")
         lines.append(f"| L{r.layer} | {r.gate_name} | {icon} {r.status} | {r.details[:50]} |\n")
-    
+
     if failed_count > 0:
         lines.append("\n> 请修复失败的门禁后再请求合并。\n")
     elif warning_count > 0:
         lines.append("\n> 建议处理警告项以提高代码质量。\n")
-    
+
     return "".join(lines)

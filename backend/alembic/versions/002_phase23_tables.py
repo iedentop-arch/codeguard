@@ -19,9 +19,9 @@ Create Date: 2026-04-13
 修改表:
 - vendor_members: 新增GitHub权限字段
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import mysql
+
+from alembic import op
 
 # revision identifiers
 revision = '002_phase23_tables'

@@ -3,13 +3,12 @@
 
 解析spec-index.md YAML结构，根据供应商类型裁剪规范列表。
 """
-import re
-import os
-from pathlib import Path
-from dataclasses import dataclass
-from typing import Optional, Dict, List, Any
-from datetime import datetime
 import logging
+import os
+import re
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +19,8 @@ class SpecModule:
     file_path: str
     status: str
     version: str
-    summary: List[str]
-    top_priority: List[str]
+    summary: list[str]
+    top_priority: list[str]
     category: str
 
 
@@ -30,8 +29,8 @@ class SpecProfile:
     """规范配置"""
     name: str
     description: str
-    enable: List[str]
-    optional: List[str]
+    enable: list[str]
+    optional: list[str]
 
 
 @dataclass
@@ -130,7 +129,7 @@ class SpecEngine:
     }
 
     @classmethod
-    def parse_spec_index(cls, spec_dir: Optional[str] = None) -> Dict[str, Any]:
+    def parse_spec_index(cls, spec_dir: str | None = None) -> dict[str, Any]:
         """
         解析spec-index.md获取规范结构
 
@@ -167,7 +166,7 @@ class SpecEngine:
         return cls._parse_yaml_content(content)
 
     @classmethod
-    def _parse_yaml_content(cls, content: str) -> Dict[str, Any]:
+    def _parse_yaml_content(cls, content: str) -> dict[str, Any]:
         """
         解析spec-index.md的YAML内容
 
@@ -237,7 +236,7 @@ class SpecEngine:
         return result
 
     @classmethod
-    def get_vendor_specs(cls, vendor_type: str, spec_index: Optional[Dict] = None) -> List[SpecModule]:
+    def get_vendor_specs(cls, vendor_type: str, spec_index: dict | None = None) -> list[SpecModule]:
         """
         根据供应商类型返回需学习的规范列表
 
@@ -266,10 +265,7 @@ class SpecEngine:
 
             for file_path, module in spec_index["modules"].items():
                 # 检查模块是否在允许列表
-                if file_path in allowed_modules:
-                    modules.append(module)
-                # 检查类别是否在允许类别
-                elif module.category in allowed_categories and module.status == "ENABLED":
+                if file_path in allowed_modules or module.category in allowed_categories and module.status == "ENABLED":
                     modules.append(module)
 
         # 所有类型都需要overview类别的规范 (vendor-onboarding等)
@@ -281,7 +277,7 @@ class SpecEngine:
         return modules
 
     @classmethod
-    def get_critical_rules(cls, spec_index: Optional[Dict] = None) -> List[CriticalRule]:
+    def get_critical_rules(cls, spec_index: dict | None = None) -> list[CriticalRule]:
         """
         提取所有CRITICAL规则
 
@@ -319,7 +315,7 @@ class SpecEngine:
         return rules
 
     @classmethod
-    def get_profile_specs(cls, profile_name: str, spec_index: Optional[Dict] = None) -> List[SpecModule]:
+    def get_profile_specs(cls, profile_name: str, spec_index: dict | None = None) -> list[SpecModule]:
         """
         根据PROFILE名称获取规范列表
 
@@ -362,7 +358,7 @@ class SpecEngine:
         return modules
 
     @classmethod
-    def get_module_dependencies(cls, module_path: str, spec_index: Optional[Dict] = None) -> List[Dict]:
+    def get_module_dependencies(cls, module_path: str, spec_index: dict | None = None) -> list[dict]:
         """
         获取模块的依赖关系
 
@@ -398,7 +394,7 @@ class SpecEngine:
         return mapping.get(vendor_type, "ai-agent")
 
     @classmethod
-    def get_spec_count_by_vendor_type(cls, vendor_type: str) -> Dict[str, int]:
+    def get_spec_count_by_vendor_type(cls, vendor_type: str) -> dict[str, int]:
         """
         获取供应商类型对应的规范统计
 

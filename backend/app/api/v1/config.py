@@ -2,16 +2,17 @@
 系统配置管理API
 Phase 3 功能：提供系统配置的CRUD操作，支持SLA权重、告警阈值等动态配置
 """
-from typing import List, Optional, Any
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Any
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.v1.auth import get_current_user
 from app.database import get_db
 from app.models.models import SystemConfig, User
-from app.api.v1.auth import get_current_user
 
 router = APIRouter()
 
@@ -24,7 +25,7 @@ class SystemConfigBase(BaseModel):
     config_value: str = Field(..., description="配置值")
     config_type: str = Field(default="string", description="配置类型: string, number, boolean, json")
     category: str = Field(default="general", description="配置分类: sla, alert, notification, system")
-    description: Optional[str] = Field(None, description="配置描述")
+    description: str | None = Field(None, description="配置描述")
     is_editable: bool = Field(default=True, description="是否可编辑")
 
 
@@ -36,7 +37,7 @@ class SystemConfigCreate(SystemConfigBase):
 class SystemConfigUpdate(BaseModel):
     """更新系统配置Schema"""
     config_value: str = Field(..., description="配置值")
-    description: Optional[str] = Field(None, description="配置描述")
+    description: str | None = Field(None, description="配置描述")
 
 
 class SystemConfigResponse(SystemConfigBase):
@@ -71,12 +72,12 @@ class AlertThresholdsConfig(BaseModel):
 
 class ConfigBatchUpdate(BaseModel):
     """批量更新配置Schema"""
-    configs: List[SystemConfigUpdate]
+    configs: list[SystemConfigUpdate]
 
 
 # ============== Helper Functions ==============
 
-async def get_config_by_key(db: AsyncSession, key: str) -> Optional[SystemConfig]:
+async def get_config_by_key(db: AsyncSession, key: str) -> SystemConfig | None:
     """根据key获取配置"""
     result = await db.execute(
         select(SystemConfig).where(SystemConfig.config_key == key)
@@ -93,11 +94,11 @@ async def check_admin_permission(current_user: User) -> None:
 
 # ============== API Endpoints ==============
 
-@router.get("", response_model=List[SystemConfigResponse])
+@router.get("", response_model=list[SystemConfigResponse])
 async def list_configs(
-    category: Optional[str] = None,
-    config_type: Optional[str] = None,
-    is_editable: Optional[bool] = None,
+    category: str | None = None,
+    config_type: str | None = None,
+    is_editable: bool | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

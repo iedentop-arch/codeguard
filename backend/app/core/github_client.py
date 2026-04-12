@@ -8,11 +8,11 @@ GitHub App API 客户端
 - 获取 PR diff 内容
 """
 import time
-import jwt
-import httpx
-from typing import Optional
 
-from app.core.config import settings, get_private_key
+import httpx
+import jwt
+
+from app.core.config import get_private_key, settings
 
 
 class GitHubAppClient:
@@ -24,7 +24,7 @@ class GitHubAppClient:
         self.app_id = settings.GITHUB_APP_ID
         self._private_key_value = settings.GITHUB_APP_PRIVATE_KEY
         self.installation_id = settings.GITHUB_APP_INSTALLATION_ID
-        self._installation_token: Optional[str] = None
+        self._installation_token: str | None = None
         self._token_expires_at: float = 0
 
     @property
@@ -127,7 +127,7 @@ class GitHubAppClient:
         state: str,
         context: str,
         description: str,
-        target_url: Optional[str] = None,
+        target_url: str | None = None,
     ) -> dict:
         """
         设置 commit status

@@ -2,6 +2,7 @@
 初始化用户数据脚本
 """
 import asyncio
+
 import bcrypt
 
 from app.core.database import async_session_maker

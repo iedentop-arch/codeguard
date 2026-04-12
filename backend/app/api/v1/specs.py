@@ -1,13 +1,13 @@
 """
 规范管理 API
 """
-from typing import Optional
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.v1.auth import get_current_user
+from app.core.database import get_db
 from app.models.models import SpecDocument
 from app.schemas.response import ApiResponse
 
@@ -58,22 +58,22 @@ async def get_spec_categories(
 
 @router.get("")
 async def list_specs(
-    category: Optional[str] = Query(None),
-    vendor_type: Optional[str] = Query(None),
+    category: str | None = Query(None),
+    vendor_type: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
     """获取规范列表"""
     query = select(SpecDocument).where(SpecDocument.is_deleted == False)
-    
+
     if category:
         query = query.where(SpecDocument.category == category)
     if vendor_type:
         query = query.where(SpecDocument.vendor_types.contains(vendor_type))
-    
+
     result = await db.execute(query)
     specs = result.scalars().all()
-    
+
     return ApiResponse(data=[
         {
             "id": s.id,

@@ -3,11 +3,11 @@
 
 用于验证服务状态和 GitHub App 配置
 """
-from fastapi import APIRouter
 from datetime import datetime
 
-from app.core.config import settings, get_private_key
-from app.core.github_client import github_client
+from fastapi import APIRouter
+
+from app.core.config import get_private_key, settings
 
 router = APIRouter()
 
@@ -16,12 +16,12 @@ router = APIRouter()
 async def health_check():
     """
     服务健康检查
-    
+
     返回服务状态和 GitHub App 配置状态
     """
     # 检查 GitHub App 配置状态
     private_key = get_private_key()
-    
+
     github_config = {
         "app_id": {
             "value": settings.GITHUB_APP_ID if not settings.GITHUB_APP_ID.startswith("placeholder") else None,
@@ -39,7 +39,7 @@ async def health_check():
             "configured": settings.GITHUB_APP_INSTALLATION_ID > 0,
         },
     }
-    
+
     # 整体配置状态
     all_configured = all([
         github_config["app_id"]["configured"],
@@ -47,7 +47,7 @@ async def health_check():
         github_config["webhook_secret"]["configured"],
         github_config["installation_id"]["configured"],
     ])
-    
+
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -72,12 +72,12 @@ async def health_check():
 async def github_app_status():
     """
     GitHub App 详细状态
-    
+
     包含配置检查清单
     """
     checks = []
     private_key = get_private_key()
-    
+
     # App ID 检查
     if settings.GITHUB_APP_ID and not settings.GITHUB_APP_ID.startswith("placeholder"):
         checks.append({
@@ -92,7 +92,7 @@ async def github_app_status():
             "message": "未配置 - 在 GitHub App 设置页获取 App ID",
             "action": "编辑 .env 文件填写 GITHUB_APP_ID",
         })
-    
+
     # 私钥检查
     if private_key:
         checks.append({
@@ -107,7 +107,7 @@ async def github_app_status():
             "message": "私钥未配置",
             "action": "保存私钥到 backend/private-key.pem 或填写 GITHUB_APP_PRIVATE_KEY",
         })
-    
+
     # Webhook Secret 检查
     if settings.GITHUB_WEBHOOK_SECRET:
         checks.append({
@@ -122,7 +122,7 @@ async def github_app_status():
             "message": "未配置",
             "action": "在 .env 中设置 GITHUB_WEBHOOK_SECRET，需与 GitHub App 设置一致",
         })
-    
+
     # Installation ID 检查
     if settings.GITHUB_APP_INSTALLATION_ID > 0:
         checks.append({
@@ -137,11 +137,11 @@ async def github_app_status():
             "message": "未配置",
             "action": "安装 GitHub App 后获取 Installation ID",
         })
-    
+
     # 计算整体状态
     pass_count = sum(1 for c in checks if c["status"] == "pass")
     total_count = len(checks)
-    
+
     return {
         "summary": {
             "total": total_count,

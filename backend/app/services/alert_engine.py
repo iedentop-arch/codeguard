@@ -6,14 +6,15 @@
 - 阈值超标检测 (CRITICAL违规、CI成功率)
 - 即时告警 (>3 CRITICAL违规单月)
 """
-from datetime import datetime, date
-from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func, desc
 import logging
+from dataclasses import dataclass
+from datetime import date, datetime
+from typing import Any
 
-from app.models.models import Vendor, MonthlyScore, QualityGate, PullRequest, SLAGrade
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.models import MonthlyScore, PullRequest, QualityGate, SLAGrade, Vendor
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ class AlertInstance:
     severity: str
     message: str
     triggered_at: datetime
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class AlertEngine:
@@ -101,7 +102,7 @@ class AlertEngine:
         cls,
         vendor_id: int,
         db: AsyncSession
-    ) -> List[AlertInstance]:
+    ) -> list[AlertInstance]:
         """
         评估单个供应商的告警状态
 
@@ -146,9 +147,9 @@ class AlertEngine:
         cls,
         rule: AlertRule,
         vendor: Vendor,
-        recent_scores: List[MonthlyScore],
+        recent_scores: list[MonthlyScore],
         db: AsyncSession
-    ) -> Optional[AlertInstance]:
+    ) -> AlertInstance | None:
         """
         评估单条规则
 
@@ -302,7 +303,7 @@ class AlertEngine:
         return None
 
     @classmethod
-    async def evaluate_all_vendors(cls, db: AsyncSession) -> List[AlertInstance]:
+    async def evaluate_all_vendors(cls, db: AsyncSession) -> list[AlertInstance]:
         """
         评估所有活跃供应商
 
@@ -329,7 +330,7 @@ class AlertEngine:
         return all_alerts
 
     @classmethod
-    def get_rule_descriptions(cls) -> List[Dict[str, str]]:
+    def get_rule_descriptions(cls) -> list[dict[str, str]]:
         """
         获取所有规则描述
 

@@ -6,14 +6,15 @@
 - L1红线检查失败阻断验收
 - 硬编码密钥检测阻断验收
 """
-from datetime import datetime, date
-from dataclasses import dataclass
-from typing import Optional, Dict, Any, List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 import logging
+from dataclasses import dataclass
+from datetime import date, datetime
+from typing import Any
 
-from app.models.models import Delivery, QualityGate, PullRequest, Vendor
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.models import Delivery, PullRequest, QualityGate, Vendor
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +27,9 @@ class ValidationResult:
     vendor_name: str
     passed: bool
     veto_triggered: bool
-    veto_reason: Optional[str]
-    violations: List[Dict[str, Any]]
-    warnings: List[Dict[str, Any]]
+    veto_reason: str | None
+    violations: list[dict[str, Any]]
+    warnings: list[dict[str, Any]]
     checked_at: datetime
 
 
@@ -50,7 +51,7 @@ class DeliveryValidator:
         vendor_id: int,
         period: date,
         db: AsyncSession
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         检查供应商在指定月份的CRITICAL违规
 
@@ -224,7 +225,7 @@ class DeliveryValidator:
         cls,
         delivery_id: int,
         db: AsyncSession
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         获取交付物的验证状态摘要
 
@@ -272,7 +273,7 @@ class DeliveryValidator:
             return "验收条件不满足，建议驳回"
 
     @classmethod
-    def get_veto_rules_description(cls) -> List[Dict[str, str]]:
+    def get_veto_rules_description(cls) -> list[dict[str, str]]:
         """
         获取一票否决规则描述
 

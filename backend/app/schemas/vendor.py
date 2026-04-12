@@ -1,10 +1,10 @@
 """
 乙方相关 Schema
 """
-from datetime import datetime, date
-from typing import Optional, List
-from pydantic import BaseModel
+from datetime import date, datetime
 from enum import Enum
+
+from pydantic import BaseModel
 
 
 class VendorType(str, Enum):
@@ -35,11 +35,11 @@ class VendorBase(BaseModel):
     """乙方基础信息"""
     name: str
     vendor_type: VendorType
-    contact_name: Optional[str] = None
-    contact_email: Optional[str] = None
-    github_org: Optional[str] = None
-    contract_start: Optional[date] = None
-    contract_end: Optional[date] = None
+    contact_name: str | None = None
+    contact_email: str | None = None
+    github_org: str | None = None
+    contract_start: date | None = None
+    contract_end: date | None = None
 
 
 class VendorCreate(VendorBase):
@@ -49,14 +49,14 @@ class VendorCreate(VendorBase):
 
 class VendorUpdate(BaseModel):
     """更新乙方"""
-    name: Optional[str] = None
-    vendor_type: Optional[VendorType] = None
-    contact_name: Optional[str] = None
-    contact_email: Optional[str] = None
-    github_org: Optional[str] = None
-    contract_start: Optional[date] = None
-    contract_end: Optional[date] = None
-    status: Optional[VendorStatus] = None
+    name: str | None = None
+    vendor_type: VendorType | None = None
+    contact_name: str | None = None
+    contact_email: str | None = None
+    github_org: str | None = None
+    contract_start: date | None = None
+    contract_end: date | None = None
+    status: VendorStatus | None = None
 
 
 class VendorResponse(VendorBase):
@@ -64,8 +64,8 @@ class VendorResponse(VendorBase):
     id: int
     status: VendorStatus
     member_count: int = 0
-    current_grade: Optional[SLAGrade] = None
-    current_score: Optional[float] = None
+    current_grade: SLAGrade | None = None
+    current_score: float | None = None
     onboarding_status: str = "not_started"
     created_at: datetime
 
@@ -75,7 +75,7 @@ class VendorResponse(VendorBase):
 
 class VendorListResponse(BaseModel):
     """乙方列表响应"""
-    items: List[VendorResponse]
+    items: list[VendorResponse]
     total: int
 
 
@@ -86,7 +86,7 @@ class MemberBase(BaseModel):
     name: str
     email: str
     role: str
-    github_username: Optional[str] = None
+    github_username: str | None = None
 
 
 class MemberCreate(MemberBase):
@@ -96,10 +96,10 @@ class MemberCreate(MemberBase):
 
 class MemberUpdate(BaseModel):
     """更新成员"""
-    name: Optional[str] = None
-    role: Optional[str] = None
-    github_username: Optional[str] = None
-    status: Optional[str] = None
+    name: str | None = None
+    role: str | None = None
+    github_username: str | None = None
+    status: str | None = None
 
 
 class MemberResponse(MemberBase):
@@ -107,8 +107,8 @@ class MemberResponse(MemberBase):
     id: int
     vendor_id: int
     status: str
-    exam_score: Optional[int] = None
-    certification_id: Optional[str] = None
+    exam_score: int | None = None
+    certification_id: str | None = None
     created_at: datetime
 
     class Config:

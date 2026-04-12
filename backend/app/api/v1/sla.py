@@ -2,20 +2,24 @@
 SLA评分API端点
 """
 from datetime import date, datetime
-from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.core.database import get_db
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.api.v1.auth import get_current_user
-from app.models.models import Vendor, MonthlyScore, User, SLAGrade
-from app.services.sla_engine import SLAEngine
-from app.schemas.sla import (
-    SLABreakdownResponse, SLACalculateRequest, SLACalculateResponse,
-    DimensionScoreResponse, VendorComparisonResponse, SLATrendResponse
-)
+from app.core.database import get_db
+from app.models.models import MonthlyScore, User, Vendor
 from app.schemas.response import ApiResponse
+from app.schemas.sla import (
+    DimensionScoreResponse,
+    SLABreakdownResponse,
+    SLACalculateRequest,
+    SLACalculateResponse,
+    SLATrendResponse,
+    VendorComparisonResponse,
+)
+from app.services.sla_engine import SLAEngine
 
 router = APIRouter()
 
@@ -79,7 +83,7 @@ async def calculate_sla_score(
 @router.get("/breakdown/{vendor_id}", response_model=ApiResponse[SLABreakdownResponse])
 async def get_sla_breakdown(
     vendor_id: int,
-    period: Optional[str] = Query(None, description="YYYY-MM格式，默认最新"),
+    period: str | None = Query(None, description="YYYY-MM格式，默认最新"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -167,9 +171,9 @@ async def get_sla_breakdown(
     ))
 
 
-@router.get("/comparison", response_model=ApiResponse[List[VendorComparisonResponse]])
+@router.get("/comparison", response_model=ApiResponse[list[VendorComparisonResponse]])
 async def get_vendor_comparison(
-    period: Optional[str] = Query(None, description="YYYY-MM格式"),
+    period: str | None = Query(None, description="YYYY-MM格式"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -265,7 +269,7 @@ async def get_sla_trend(
 
 @router.post("/calculate-all")
 async def calculate_all_vendors(
-    period: Optional[str] = Query(None, description="YYYY-MM格式"),
+    period: str | None = Query(None, description="YYYY-MM格式"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

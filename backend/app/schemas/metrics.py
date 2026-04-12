@@ -2,15 +2,16 @@
 SLA评分相关 Schema
 """
 from datetime import date
-from typing import Optional, List
+
 from pydantic import BaseModel
+
 from .vendor import SLAGrade
 
 
 class MonthlyScoreBase(BaseModel):
     """月度评分基础"""
     critical_violations: int = 0
-    warning_trend_pct: Optional[float] = None
+    warning_trend_pct: float | None = None
     code_quality_score: float = 0
     compliance_pass_rate: float = 0
     pr_avg_review_rounds: float = 0
@@ -22,7 +23,7 @@ class MonthlyScoreResponse(MonthlyScoreBase):
     """月度评分响应"""
     id: int
     vendor_id: int
-    vendor_name: Optional[str] = None
+    vendor_name: str | None = None
     score_period: date
     total_score: float
     grade: SLAGrade
@@ -39,7 +40,7 @@ class VendorScorecard(BaseModel):
     vendor_type: str
     current_grade: SLAGrade
     current_score: float
-    latest_score: Optional[MonthlyScoreResponse] = None
+    latest_score: MonthlyScoreResponse | None = None
     dimensions: dict = {}  # 7维度详情
 
 
@@ -60,4 +61,4 @@ class TrendDataPoint(BaseModel):
 
 class TrendResponse(BaseModel):
     """趋势响应"""
-    data: List[TrendDataPoint]
+    data: list[TrendDataPoint]

@@ -10,14 +10,15 @@ SLA评分引擎
 - AI标记率: 10%
 - CI成功率: 5%
 """
-from datetime import date, datetime
-from dataclasses import dataclass
-from typing import Optional, Dict, Any, List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
 import logging
+from dataclasses import dataclass
+from datetime import date
+from typing import Any
 
-from app.models.models import Vendor, MonthlyScore, QualityGate, PullRequest, SLAGrade
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.models import MonthlyScore, PullRequest, QualityGate, SLAGrade, Vendor
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,10 @@ class SLACalculationResult:
     vendor_id: int
     vendor_name: str
     period: str
-    dimensions: List[DimensionScore]
+    dimensions: list[DimensionScore]
     total_score: float
     grade: SLAGrade
-    raw_metrics: Dict[str, Any]
+    raw_metrics: dict[str, Any]
 
 
 class SLAEngine:
@@ -167,7 +168,7 @@ class SLAEngine:
         vendor_id: int,
         period: date,
         db: AsyncSession
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         收集乙方在指定月份的原始指标数据
 
@@ -406,7 +407,7 @@ class SLAEngine:
         cls,
         period: date,
         db: AsyncSession
-    ) -> List[SLACalculationResult]:
+    ) -> list[SLACalculationResult]:
         """
         计算所有活跃乙方的月度评分
 
@@ -439,7 +440,7 @@ class SLAEngine:
         return results
 
     @classmethod
-    def get_dimension_breakdown(cls, result: SLACalculationResult) -> Dict[str, Any]:
+    def get_dimension_breakdown(cls, result: SLACalculationResult) -> dict[str, Any]:
         """
         获取维度得分详情 (用于前端雷达图展示)
 

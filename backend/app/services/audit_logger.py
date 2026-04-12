@@ -6,13 +6,13 @@
 - 配置变更操作
 - 权限授予操作
 """
-from datetime import datetime
-from dataclasses import dataclass
-from typing import Optional, Dict, Any, List
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 import json
 import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +25,12 @@ class AuditLogEntry:
     user_role: str
     action_type: str
     resource_type: str
-    resource_id: Optional[int]
-    vendor_id: Optional[int]
-    old_value: Optional[Dict]
-    new_value: Optional[Dict]
+    resource_id: int | None
+    vendor_id: int | None
+    old_value: dict | None
+    new_value: dict | None
     description: str
-    ip_address: Optional[str]
+    ip_address: str | None
 
 
 class AuditLogger:
@@ -113,8 +113,8 @@ class AuditLogger:
         action: str,
         old_status: str,
         new_status: str,
-        comment: Optional[str],
-        vendor_id: Optional[int],
+        comment: str | None,
+        vendor_id: int | None,
         db: AsyncSession
     ) -> int:
         """
@@ -158,7 +158,7 @@ class AuditLogger:
         user_role: str,
         member_id: int,
         action: str,
-        old_perm: Optional[str],
+        old_perm: str | None,
         new_perm: str,
         vendor_id: int,
         db: AsyncSession

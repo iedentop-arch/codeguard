@@ -1,26 +1,24 @@
 """
 告警管理API
 """
-from datetime import datetime
-from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
 from app.api.v1.auth import get_current_user
-from app.models.models import Vendor, User
-from app.services.alert_engine import AlertEngine, AlertInstance
+from app.core.database import get_db
+from app.models.models import User, Vendor
 from app.schemas.response import ApiResponse
+from app.services.alert_engine import AlertEngine
 
 router = APIRouter()
 
 
 @router.get("")
 async def list_alerts(
-    vendor_id: Optional[int] = Query(None),
-    severity: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
+    vendor_id: int | None = Query(None),
+    severity: str | None = Query(None),
+    status: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
