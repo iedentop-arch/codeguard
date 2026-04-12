@@ -205,7 +205,6 @@ export const VendorRadarChart: React.FC<VendorRadarChartProps> = ({
               </>
             )}
             <Legend
-              position="bottom"
               wrapperStyle={{ paddingTop: '20px', fontSize: config.fontSize }}
             />
           </RadarChart>
@@ -307,7 +306,6 @@ export const VendorComparisonRadar: React.FC<VendorComparisonRadarProps> = ({
               />
             ))}
             <Legend
-              position="bottom"
               wrapperStyle={{ paddingTop: '20px', fontSize: config.fontSize }}
             />
           </RadarChart>
@@ -390,7 +388,6 @@ export const SLATrendRadar: React.FC<SLATrendRadarProps> = ({
               />
             ))}
             <Legend
-              position="bottom"
               wrapperStyle={{ paddingTop: '20px' }}
             />
           </RadarChart>
