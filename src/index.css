@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary palette - Deep blue professional */
+    --primary: 217 73% 22%;
+    --primary-foreground: 210 40% 98%;
+    --primary-glow: 210 79% 46%;
+
+    /* Background & surface */
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Secondary */
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    /* Muted */
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent */
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Border & Input */
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 73% 22%;
+    --radius: 0.5rem;
+
+    /* SLA Grade colors */
+    --grade-a: 142 71% 45%;
+    --grade-b: 210 79% 46%;
+    --grade-c: 43 96% 56%;
+    --grade-d: 0 84% 60%;
+
+    /* Quality gate layer colors */
+    --gate-redline: 0 84% 60%;
+    --gate-mandatory: 43 96% 56%;
+    --gate-suggested: 210 79% 46%;
+    --gate-info: 142 71% 45%;
+
+    /* Status */
+    --status-success: 142 71% 45%;
+    --status-warning: 43 96% 56%;
+    --status-danger: 0 84% 60%;
+    --status-info: 210 79% 46%;
+
+    /* Sidebar */
+    --sidebar: 217 73% 22%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-accent: 217 73% 30%;
+    --sidebar-accent-foreground: 210 40% 98%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 79% 56%;
+    --primary-foreground: 222 47% 11%;
+    --primary-glow: 210 79% 66%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 213 27% 84%;
+    --sidebar: 222 47% 8%;
+    --sidebar-foreground: 210 40% 80%;
+    --sidebar-accent: 222 47% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Noto Sans SC', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Consolas', monospace;
+  }
+}
+
+/* Spec content - ASCII art / table code blocks need CJK monospace alignment */
+.spec-content pre,
+.spec-content pre code,
+.spec-content [class*="prism"] {
+  font-family: 'Menlo', 'Monaco', 'Consolas', 'Courier New',
+    'Noto Sans Mono CJK SC', 'Source Han Mono SC', 'Microsoft YaHei Mono',
+    monospace !important;
+  letter-spacing: 0;
+  word-spacing: 0;
+}
+
+/* Ensure ASCII art code blocks don't wrap and stay aligned */
+.spec-content pre {
+  overflow-x: auto !important;
+  white-space: pre !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
