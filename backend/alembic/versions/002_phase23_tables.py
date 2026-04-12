@@ -25,7 +25,7 @@ from alembic import op
 
 # revision identifiers
 revision = '002_phase23_tables'
-down_revision = '001_initial'
+down_revision = '001'
 branch_labels = None
 depends_on = None
 
@@ -42,7 +42,7 @@ def upgrade() -> None:
         sa.Column('started_at', sa.DateTime(), comment='开始时间'),
         sa.Column('completed_at', sa.DateTime(), comment='完成时间'),
         sa.Column('error_message', sa.Text(), comment='错误信息'),
-        sa.Column('metadata', sa.JSON(), comment='元数据'),
+        sa.Column('extra_data', sa.JSON(), comment='元数据'),
         sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint('id')
     )
@@ -58,7 +58,7 @@ def upgrade() -> None:
         sa.Column('message', sa.Text(), nullable=False, comment='告警消息'),
         sa.Column('triggered_at', sa.DateTime(), server_default=sa.func.now(), comment='触发时间'),
         sa.Column('resolved_at', sa.DateTime(), comment='解决时间'),
-        sa.Column('metadata', sa.JSON(), comment='元数据'),
+        sa.Column('extra_data', sa.JSON(), comment='元数据'),
         sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint('id'),
         sa.Index('idx_alerts_vendor', 'vendor_id'),

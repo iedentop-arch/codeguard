@@ -283,7 +283,7 @@ class TaskLog(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime, comment="开始时间")
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, comment="完成时间")
     error_message: Mapped[str | None] = mapped_column(Text, comment="错误信息")
-    metadata: Mapped[str | None] = mapped_column(Text, comment="元数据(JSON)")
+    extra_data: Mapped[str | None] = mapped_column(Text, comment="元数据(JSON)")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
@@ -299,7 +299,7 @@ class Alert(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False, comment="告警消息")
     triggered_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, comment="触发时间")
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime, comment="解决时间")
-    metadata: Mapped[str | None] = mapped_column(Text, comment="元数据(JSON)")
+    extra_data: Mapped[str | None] = mapped_column(Text, comment="元数据(JSON)")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
